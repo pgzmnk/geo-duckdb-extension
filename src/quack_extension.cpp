@@ -20,6 +20,15 @@ inline void QuackScalarFun(DataChunk &args, ExpressionState &state, Vector &resu
         });
 }
 
+inline void FireScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
+    auto &name_vector = args.data[0];
+    UnaryExecutor::Execute<string_t, string_t>(
+	    name_vector, result, args.size(),
+	    [&](string_t name) { 
+			return StringVector::AddString(result, "Fire "+name.GetString()+" 🔥");;
+        });
+}
+
 static void LoadInternal(DatabaseInstance &instance) {
 	Connection con(instance);
     con.BeginTransaction();
@@ -30,6 +39,12 @@ static void LoadInternal(DatabaseInstance &instance) {
             ScalarFunction("quack", {LogicalType::VARCHAR}, LogicalType::VARCHAR, QuackScalarFun));
     quack_fun_info.on_conflict = OnCreateConflict::ALTER_ON_CONFLICT;
     catalog.CreateFunction(*con.context, &quack_fun_info);
+
+
+    CreateScalarFunctionInfo fire_fun_info(
+        ScalarFunction("fire", {LogicalType::VARCHAR}, LogicalType::VARCHAR, FireScalarFun));
+    fire_fun_info.on_conflict = OnCreateConflict::ALTER_ON_CONFLICT;
+    catalog.CreateFunction(*con.context, &fire_fun_info);
     con.Commit();
 }
 
